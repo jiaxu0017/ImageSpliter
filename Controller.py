@@ -3,9 +3,12 @@ import ImgSpliter
 import Filter
 import time
 import os
+import shutil
 
 
 def main():
+    if os.path.exists("PictureBooks\\data"):
+        shutil.rmtree("PictureBooks\\data")
     ppr = PreProcesser.RowPreProcesser("PictureBooks")
     img_list = ppr.retrieve()
     isr = ImgSpliter.RowImgSpliter(img_list, "PictureBooks")
