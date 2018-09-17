@@ -17,7 +17,7 @@ def main():
     count = isr.run_quere()
     end = time.time()
     print("总耗时%d秒，平均耗时%d秒" % (end - start, (end - start) / count))
-    Filter.Filter.dup_remove("PictureBooks\\data")
+    Filter.Filter.dup_remove(10,"PictureBooks\\data")
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ class Filter(object):
         pass
 
     @staticmethod
-    def dup_remove(dir_path="."):
+    def dup_remove(thresh, dir_path="."):
         """
         过滤相似图片
         :param dir_path:
@@ -24,18 +24,21 @@ class Filter(object):
                 if len(y) > 3:
                     y, _ = y.split(".")
                 # print(x,y)
-                if (int(x) - com[0]) ** 2 + (int(y) - com[1]) ** 2 < 4:
-                    try:
-                        name = str(com[0]) + "," + str(com[1]) + ".png"
-                        os.remove(os.path.join(root, name))
-                    except Exception as e:
-                        pass
-                    try:
-                        name = str(com[0]) + "," + str(com[1])
-                        os.remove(os.path.join(root, name))
-                    except Exception as e:
-                        pass
-                com = (int(x), int(y))
+                try:
+                    if (int(x) - com[0]) ** 2 + (int(y) - com[1]) ** 2 < thresh:
+                        try:
+                            name = str(com[0]) + "," + str(com[1]) + ".png"
+                            os.remove(os.path.join(root, name))
+                        except Exception as e:
+                            pass
+                        try:
+                            name = str(com[0]) + "," + str(com[1])
+                            os.remove(os.path.join(root, name))
+                        except Exception as e:
+                            pass
+                    com = (int(x), int(y))
+                except Exception as e:
+                    pass
             for dir_name in dirs:
                 pass
 

@@ -12,7 +12,7 @@ class ImgSpliter(object):
         self._imgs = imgs
         self._root_dir = root_dir
 
-    def split(self, src_name, home_path):
+    def split(self, src_path, home_path):
         pass
 
 
@@ -63,16 +63,16 @@ class RowImgSpliter(ImgSpliter):
         imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # 中值滤波
-        imgray = cv2.medianBlur(imgray, 5)
+        # imgray = cv2.medianBlur(imgray, 5)
 
         # 双边滤波
         imgray = cv2.bilateralFilter(imgray, 9, 75, 75)
 
         # 二值化
-        # ret, thresh = cv2.threshold(imgray, 127, 255, 0)
+        ret, thresh = cv2.threshold(imgray, 90, 255, 0)
 
         # Canny 边缘检测代替二值化
-        thresh = cv2.Canny(img, 30, 70)
+        # thresh = cv2.Canny(img, 50, 150)
 
         # 获取外轮廓，精简，改变原图
         # cv2.CHAIN_APPROX_NONE 不精简
@@ -81,11 +81,15 @@ class RowImgSpliter(ImgSpliter):
         # cv2.RETR_CCOMP 表示提取所有轮廓并将组织成一个两层结构，其中顶层轮廓是外部轮廓，
         # 第二层轮廓是“洞”的轮廓
         # cv2.RETR_TREE 提取所有轮廓并组织成轮廓嵌套的完整层级结构
-        image, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        image, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        self.save_png(src, imgray, contours, home_path)
+        thresh = 255 - thresh
+        image, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        self.save_png(src, imgray, contours, home_path)
 
-        # 按面积排序
-        areas = np.zeros([len(contours)])
-        index = 0  # 面积的下标指针
+    def save_png(self, src, imgray, contours, home_path):
+        width = src.shape[1]
+        height = src.shape[0]
 
         # 创建存储轮廓点的文件夹
         if not os.path.exists(home_path + "\\contours"):
@@ -97,6 +101,10 @@ class RowImgSpliter(ImgSpliter):
         if not os.path.exists(home_path + "\\offset"):
             os.mkdir(home_path + "\\offset")
 
+        # 按面积排序
+        areas = np.zeros([len(contours)])
+        index = 0  # 面积的下标指针
+
         # 遍历轮廓，计算每个轮廓的面积
         for contour in contours:
             areas[index] = cv2.contourArea(contour)
@@ -107,7 +115,7 @@ class RowImgSpliter(ImgSpliter):
 
         # 对每个区域进行处理
         for index in areas_s:
-            if areas[index] < width * height * 0.001:
+            if areas[index] < width * height * 0.001 or areas[index] > width * height * 0.1:
                 continue
             m = cv2.moments(contours[index.tolist()[0]])
 
@@ -119,7 +127,7 @@ class RowImgSpliter(ImgSpliter):
             offset_y = (m['m01'] / m['m00']) / width
 
             # 获得轮廓的边缘点
-            np.savetxt(home_path + '\\contours\\' + str(cx) + ',' + str(cy),
+            np.savetxt('{0}\\contours\\{1},{2}'.format(home_path, str(cx), str(cy)),
                        (contours[index.tolist()[0]]).reshape((-1, 2)),
                        fmt='%d',
                        delimiter=',')
@@ -132,7 +140,7 @@ class RowImgSpliter(ImgSpliter):
             x_ = x_[:, np.newaxis]
             y_ = y_[:, np.newaxis]
             contours_points = np.concatenate((x_, y_), axis=1)
-            np.savetxt(home_path + '\\offset\\' + str(offset_x) + ',' + str(offset_y),
+            np.savetxt(home_path + '\\offset\\' + str(cx) + ',' + str(cy),
                        contours_points,
                        fmt='%f',
                        delimiter=',')
@@ -174,7 +182,7 @@ class RowImgSpliter(ImgSpliter):
 
 
 if __name__ == "__main__":
-    imgs = ["img_6.jpg"]
+    imgs = ["img_17.jpg"]
     ris = RowImgSpliter(imgs, 'PictureBooks')
     ris.make_dir()
     ris.run_quere()
